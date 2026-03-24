@@ -1,10 +1,42 @@
-# SmartSpend - Veri Analizi Projesi Başlangıcı
-print("SmartSpend: Kişisel Harcama Analizine Hoş Geldiniz!")
+import pandas as pd
+import matplotlib.pyplot as plt
 
-def harcama_ozeti(harcamalar):
-    toplam = sum(harcamalar)
-    print(f"Toplam Harcama: {toplam} TL")
+def veriyi_yukle(dosya_yolu):
+    return pd.read_csv(dosya_yolu, skip_blank_lines=True).dropna(subset=['Miktar'])
 
-# Test verisi
-test_verisi = [100, 250, 75]
-harcama_ozeti(test_verisi)
+def harcamalari_analiz_et_ve_ciz(df):
+    
+    df['Kategori'] = df['Kategori'].astype(str).str.strip()
+    kategori_ozeti = df.groupby('Kategori')['Miktar'].sum()
+    
+    plt.figure(figsize=(10, 7))
+    kategori_ozeti.plot(kind='pie', autopct='%1.1f%%', startangle=140)
+    plt.title('Harcama Dagilimim')
+    plt.ylabel('')
+    plt.show()
+
+def butce_kontrol(df):
+    
+    limitler = {
+        "Gıda": 1000,
+        "Eğitim": 700,
+        "Eğlence": 700,
+        "Kıyafet": 1000,
+        "Ulaşım": 500
+    }
+    print("\n--- Bütçe Kontrol Raporu ---")
+    kategori_toplamlari = df.groupby('Kategori')['Miktar'].sum()
+    
+    for kat, miktar in kategori_toplamlari.items():
+        if kat in limitler:
+            limit = limitler[kat]
+            if miktar > limit:
+                print(f"DİKKAT: {kat} limitini {miktar-limit} TL aştın!")
+            else:
+                print(f"{kat} bütçe dahilinde. (Kalan: {limit-miktar} TL)")
+
+if __name__ == "__main__":
+    
+    veriler = veriyi_yukle('harcamalar.csv')
+    harcamalari_analiz_et_ve_ciz(veriler)
+    butce_kontrol(veriler)
